@@ -27,11 +27,15 @@ echo "${BG_MAGENTA}${BOLD}Démarrage de l'exécution...${RESET}"
 
 # Définir les variables d'environnement
 export REPO_NAME="demo-repo"
-export CLUSTER_NAME="hello-world-wmn7"
-export ZONE="us-west1-c"
-export NAMESPACE="gmp-m4xd"
-export INTERVAL="45s"
-export SERVICE_NAME="helloweb-service-0tpk"
+export CLUSTER_NAME="hello-world-y66u"
+export ZONE="us-east1-d"
+export NAMESPACE="gmp-rgmm"
+export INTERVAL="30s"
+export SERVICE_NAME="helloweb-service-os77"
+
+# Définir le projet Google Cloud
+export PROJECT_ID=$(gcloud config get-value project)
+gcloud config set project $PROJECT_ID
 
 # Configurer la zone de calcul
 gcloud config set compute/zone $ZONE
@@ -45,6 +49,9 @@ gcloud container clusters create $CLUSTER_NAME \
   --min-nodes 2 \
   --max-nodes 6 \
   --enable-autoscaling --no-enable-ip-alias
+
+# Configurer kubectl pour le cluster GKE
+gcloud container clusters get-credentials $CLUSTER_NAME --zone $ZONE
 
 # Mise à jour du cluster GKE avec Prometheus géré activé
 echo "${BG_BLUE}${BOLD}Activation de Prometheus géré...${RESET}"
@@ -70,11 +77,7 @@ kubectl -n $NAMESPACE apply -f pod-monitoring.yaml
 echo "${BG_BLUE}${BOLD}Déploiement de l'application Hello App...${RESET}"
 gsutil cp -r gs://spls/gsp510/hello-app/ .
 
-export PROJECT_ID=$(gcloud config get-value project)
-export REGION="${ZONE%-*}"
-
 cd ~/hello-app
-gcloud container clusters get-credentials $CLUSTER_NAME --zone $ZONE
 kubectl -n $NAMESPACE apply -f manifests/helloweb-deployment.yaml
 
 # Mise à jour de l'image de l'application Hello
@@ -135,7 +138,8 @@ cat > awesome.json <<EOF_END
     "autoClose": "604800s"
   },
   "combiner": "OR",
-  "enabled": true
+  "enabled": true,
+  "projectId": "$PROJECT_ID"
 }
 EOF_END
 
